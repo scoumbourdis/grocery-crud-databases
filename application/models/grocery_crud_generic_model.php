@@ -1,12 +1,24 @@
 <?php
 class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 
+    public $ESCAPE_CHAR = '"';
+
+    public function __construct(){
+        parent::__construct();
+        // this is a simple hack to get ESCAPE_CHAR
+        $test = $this->protect_identifiers('t');
+        $first_char = substr($test,0,1);
+        if($first_char !== 't'){
+            $this->ESCAPE_CHAR = $first_char;
+        }
+    }
+
     function get_list()
     {
     	if($this->table_name === null)
     		return false;
 
-        $select = $this->db->protect_identifiers("{$this->table_name}").".*";
+        $select = $this->protect_identifiers("{$this->table_name}").".*";
 
     	//set_relation special queries
     	if(!empty($this->relation))
@@ -20,15 +32,15 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 				if(strstr($related_field_title,'{'))
 				{
 					$related_field_title = str_replace(" ","&nbsp;",$related_field_title);
-    				$select .= ", CONCAT('".str_replace(array('{','}'),array("',COALESCE({$unique_join_name}.",", ''),'"),str_replace("'","\\'",$related_field_title))."') as $unique_field_name";
+    				$select .= ", CONCAT('".str_replace(array('{','}'),array("',COALESCE(".$this->protect_identifiers($unique_join_name).".".$this->ESCAPE_CHAR, $this->ESCAPE_CHAR.", ''),'"),str_replace("'","\\'",$related_field_title))."') as ".$this->protect_identifiers($unique_field_name);
 				}
     			else
     			{
-    				$select .= ', ' . $this->db->protect_identifiers($unique_join_name).'.'. $this->db->protect_identifiers($related_field_title).' AS '. $this->db->protect_identifiers($unique_field_name);
+    				$select .= ', ' . $this->protect_identifiers($unique_join_name. '.'. $related_field_title).' AS '. $this->protect_identifiers($unique_field_name);
     			}
 
     			if($this->field_exists($related_field_title))
-    				$select .= ', '.$this->db->protect_identifiers($this->table_name).'.'.$this->db->protect_identifiers($related_field_title).' AS '.$this->db->protect_identifiers($this->table_name).'.'.$this->db->protect_identifiers($related_field_title);
+    				$select .= ', '.$this->protect_identifiers($this->table_name. '.'. $related_field_title).' AS '.$this->protect_identifiers($this->table_name. '.'. $related_field_title);
     		}
     	}
 
@@ -65,13 +77,13 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 	    	}
 	    	else
 	    	{
-	    		$field .= "$selection_table.$title_field_selection_table";
+	    		$field .= $this->protect_identifiers($selection_table.'.'.$title_field_selection_table);
 	    	}
 
     		//Sorry Codeigniter but you cannot help me with the subquery!
-    		$select .= ", (SELECT GROUP_CONCAT(DISTINCT $field) FROM $selection_table "
-    			."LEFT JOIN $relation_table ON $relation_table.$primary_key_alias_to_selection_table = $selection_table.$primary_key_selection_table "
-    			."WHERE $relation_table.$primary_key_alias_to_this_table = `{$this->table_name}`.$this_table_primary_key GROUP BY $relation_table.$primary_key_alias_to_this_table) AS $field_name";
+    		$select .= ", (SELECT GROUP_CONCAT(DISTINCT ".$this->protect_identifiers($field).") FROM ".$this->protect_identifiers($selection_table)
+    			." LEFT JOIN ".$this->protect_identifiers($relation_table)." ON ".$this->protect_identifiers($relation_table.".".$primary_key_alias_to_selection_table)." = ".$this->protect_identifiers($selection_table.".".$primary_key_selection_table)
+    			." WHERE ".$this->protect_identifiers($relation_table.".".$primary_key_alias_to_this_table)." = ".$this->protect_identifiers($this->table_name.".".$this_table_primary_key)." GROUP BY ".$this->protect_identifiers($relation_table.".".$primary_key_alias_to_this_table).") AS ".$this->protect_identifiers($field_name);
     	}
 
     	return $select;
@@ -82,7 +94,7 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
     	//set_relation_n_n special queries. We prefer sub queries from a simple join for the relation_n_n as it is faster and more stable on big tables.
     	if(!empty($this->relation_n_n))
     	{
-    		$select = "{$this->table_name}.*";
+    		$select = $this->protect_identifiers($this->table_name).'.'.'*';
     		$select = $this->relation_n_n_queries($select);
 
     		$this->db->select($select,false);
@@ -101,7 +113,7 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 		if($related_primary_key !== false)
 		{
 			$unique_name = $this->_unique_join_name($field_name);
-			$this->db->join( $related_table.' as '.$unique_name , "$unique_name.$related_primary_key = {$this->table_name}.$field_name",'left');
+			$this->db->join( $this->protect_identifiers($related_table).' as '.$this->protect_identifiers($unique_name) , $this->protect_identifiers($unique_name.'.'.$related_primary_key).' = '. $this->protect_identifiers($this->table_name.'.'.$field_name),'left');
 
 			$this->relation[$field_name] = array($field_name , $related_table , $related_field_title);
 
@@ -109,11 +121,6 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 		}
 
     	return false;
-    }
-
-    function set_relation_n_n_field($field_info)
-    {
-		$this->relation_n_n[$field_info->field_name] = $field_info;
     }
 
     function get_relation_array($field_name , $related_table , $related_field_title, $where_clause, $order_by, $limit = null, $search_like = null)
@@ -128,11 +135,11 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
     	if(strstr($related_field_title,'{'))
     	{
     		$related_field_title = str_replace(" ", "&nbsp;", $related_field_title);
-    		$select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
+    		$select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'", $this->protect_identifiers($related_field_title)))."') as ".$this->protect_identifiers($field_name_hash);
     	}
     	else
     	{
-	    	$select .= "$related_table.$related_field_title as $field_name_hash";
+	    	$select .= $this->protect_identifiers($related_table.'.'.$related_field_title).' as '.$this->protect_identifiers($field_name_hash);
     	}
 
     	$this->db->select($select,false);
@@ -146,7 +153,7 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
     		$this->db->limit($limit);
 
     	if($search_like !== null)
-    		$this->db->having("$field_name_hash LIKE '%".$this->db->escape_like_str($search_like)."%'");
+    		$this->db->having($this->protect_identifiers($field_name_hash)." LIKE '%".$this->db->escape_like_str($search_like)."%'");
 
     	$order_by !== null
     		? $this->db->order_by($order_by)
@@ -246,55 +253,9 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
         return $results_array;
     }
 
-    function db_relation_n_n_update($field_info, $post_data ,$main_primary_key)
-    {
-    	$this->db->where($field_info->primary_key_alias_to_this_table, $main_primary_key);
-    	if(!empty($post_data))
-    		$this->db->where_not_in($field_info->primary_key_alias_to_selection_table , $post_data);
-    	$this->db->delete($field_info->relation_table);
-
-    	$counter = 0;
-    	if(!empty($post_data))
-    	{
-    		foreach($post_data as $primary_key_value)
-	    	{
-				$where_array = array(
-	    			$field_info->primary_key_alias_to_this_table => $main_primary_key,
-	    			$field_info->primary_key_alias_to_selection_table => $primary_key_value,
-	    		);
-
-	    		$this->db->where($where_array);
-				$count = $this->db->from($field_info->relation_table)->count_all_results();
-
-				if($count == 0)
-				{
-					if(!empty($field_info->priority_field_relation_table))
-						$where_array[$field_info->priority_field_relation_table] = $counter;
-
-					$this->db->insert($field_info->relation_table, $where_array);
-
-				}elseif($count >= 1 && !empty($field_info->priority_field_relation_table))
-				{
-					$this->db->update( $field_info->relation_table, array($field_info->priority_field_relation_table => $counter) , $where_array);
-				}
-
-				$counter++;
-	    	}
-    	}
-    }
-
-    function db_relation_n_n_delete($field_info, $main_primary_key)
-    {
-    	$this->db->where($field_info->primary_key_alias_to_this_table, $main_primary_key);
-    	$this->db->delete($field_info->relation_table);
-    }
-
     function get_field_types_basic_table()
     {
     	$db_field_types = array();
-        echo '<pre>';
-        var_dump ($this->db->field_data($this->table_name));
-        echo '</pre>';
         foreach($this->db->field_data($this->table_name) as $db_field_type)
     	{
     	    $db_type = $db_field_type->type;
@@ -314,12 +275,6 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
     	return $results;
     }
 
-    function get_field_types($table_name)
-    {
-    	$results = $this->db->field_data($table_name);
-    	return $results;
-    }
-
     function db_delete($primary_key_value)
     {
     	$primary_key_field = $this->get_primary_key();
@@ -327,8 +282,6 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
     	if($primary_key_field === false)
     		return false;
 
-        //IN SQLITE this produce error
-    	//$this->db->limit(1);
     	$this->db->delete($this->table_name,array( $primary_key_field => $primary_key_value));
     	if( $this->db->affected_rows() != 1)
     		return false;
@@ -373,10 +326,6 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
                         break;
                     }
                 }
-                // pqsql doesn't provide primary key information. In this case, assume the first field as primary
-                if($primary_key === FALSE){
-                    $primary_key = $fields[0]->name;
-                }
 
                 return $primary_key;
 	    	}
@@ -403,10 +352,6 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
                     break;
 	    		}
 	    	}
-            // pqsql doesn't provide primary key information. In this case, assume the first field as primary
-            if($primary_key === FALSE){
-                $primary_key = $fields[0]->name;
-            }
 
 	    	return $primary_key;
     	}
@@ -416,6 +361,11 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
     function escape_str($value)
     {
     	return $this->db->escape_str($value);
+    }
+
+    function protect_identifiers($value)
+    {
+        return $this->db->protect_identifiers($value);
     }
 
 }
