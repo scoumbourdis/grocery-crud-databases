@@ -34,7 +34,8 @@ class Examples extends CI_Controller {
 
 	public function offices()
 	{
-		$output = $this->crud->render();
+	    $crud = $this->new_crud();
+		$output = $crud->render();
 
 		$this->_example_output($output);
 	}
@@ -200,6 +201,8 @@ class Examples extends CI_Controller {
 		$crud = $this->new_crud();
 		$crud->set_table('offices');
 		$crud->set_subject('Office');
+        $crud->required_fields('city');
+        $crud->columns('city','country','phone','addressLine1','postalCode');
 
 		$crud->set_crud_url_path(site_url(strtolower(__CLASS__."/".__FUNCTION__)),site_url(strtolower(__CLASS__."/multigrids")));
 
