@@ -73,7 +73,7 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 	    	if($use_template)
 	    	{
 	    		$title_field_selection_table = str_replace(" ", "&nbsp;", $title_field_selection_table);
-	    		$field .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$title_field_selection_table))."')";
+	    		$field .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$this->protect_identifiers($title_field_selection_table)))."')";
 	    	}
 	    	else
 	    	{
@@ -130,12 +130,12 @@ class grocery_CRUD_Generic_Model  extends grocery_CRUD_Model  {
 
     	$related_primary_key = $this->get_primary_key($related_table);
 
-    	$select = "$related_table.$related_primary_key, ";
+    	$select = $this->protect_identifiers($related_table).'.'.$this->protect_identifiers($related_primary_key).', ';
 
     	if(strstr($related_field_title,'{'))
     	{
     		$related_field_title = str_replace(" ", "&nbsp;", $related_field_title);
-    		$select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'", $this->protect_identifiers($related_field_title)))."') as ".$this->protect_identifiers($field_name_hash);
+    		$select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", ''),'"),str_replace("'","\\'", $related_field_title))."') as ".$this->protect_identifiers($field_name_hash);
     	}
     	else
     	{

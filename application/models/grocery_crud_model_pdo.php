@@ -9,6 +9,19 @@ class grocery_crud_model_PDO extends grocery_CRUD_Generic_Model{
         $this->subdriver = $this->db->subdriver;
     }
 
+    function db_insert($post_array)
+    {
+        $insert = $this->db->insert($this->table_name,$post_array);
+        if($insert)
+        {
+            // PDO driver for postgresql broken. Therefore $this->db->insert_id() won't work
+            if($this->subdriver != 'pgsql'){
+                return $this->db->insert_id();
+            }
+        }
+        return false;
+    }
+
     function get_primary_key($table_name = null)
     {
         // let's see what the parent can do
@@ -38,6 +51,45 @@ class grocery_crud_model_PDO extends grocery_CRUD_Generic_Model{
         }
 
         return $primary_key;
+    }
+
+    function get_edit_values($primary_key_value)
+    {
+        $primary_key_field = $this->get_primary_key();
+        $this->db->where($primary_key_field,$primary_key_value);
+        $result = $this->db->get($this->table_name)->row();
+        // some driver like postgresql doesn't return string
+        foreach($result as $key => $value) {
+            $result->$key = (string)$value;
+        }
+        return $result;
+    }
+
+    function get_field_types_basic_table()
+    {
+        $db_field_types = array();
+        $field_data_list = $this->db->field_data($this->table_name);
+        // pgsql always return fields in reverse order
+        if($this->subdriver == 'pgsql'){
+            $field_data_list = array_reverse($field_data_list);
+        }
+        foreach($field_data_list as $db_field_type)
+        {
+            $db_type = $db_field_type->type;
+            $length = $db_field_type->max_length;
+            $db_field_types[$db_field_type->name]['db_max_length'] = $length;
+            $db_field_types[$db_field_type->name]['db_type'] = $db_type;
+            $db_field_types[$db_field_type->name]['db_null'] = true;
+            $db_field_types[$db_field_type->name]['db_extra'] = '';
+        }
+
+        $results = $field_data_list;
+        foreach($results as $num => $row)
+        {
+            $row = (array)$row;
+            $results[$num] = (object)( array_merge($row, $db_field_types[$row['name']])  );
+        }
+        return $results;
     }
 
     function get_list()
@@ -107,9 +159,9 @@ class grocery_crud_model_PDO extends grocery_CRUD_Generic_Model{
                 $title_field_selection_table = str_replace(" ", "&nbsp;", $title_field_selection_table);
                 // some DBMS doesn't have "CONCAT" function
                 if(in_array($this->subdriver,$this->NO_CONCAT_DRIVER)){
-                    $field .= "('".str_replace(array('{','}'),array("',COALESCE(",", '') || '"),str_replace("'","\\'",$title_field_selection_table))."')";
+                    $field .= "('".str_replace(array('{','}'),array("',COALESCE(",", '') || '"),str_replace("'","\\'",$this->protect_identifiers($title_field_selection_table)))."')";
                 }else{
-                    $field .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$title_field_selection_table))."')";
+                    $field .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$this->protect_identifiers($title_field_selection_table)))."')";
                 }
             }
             else
@@ -163,16 +215,16 @@ class grocery_crud_model_PDO extends grocery_CRUD_Generic_Model{
 
         $related_primary_key = $this->get_primary_key($related_table);
 
-        $select = "$related_table.$related_primary_key, ";
+        $select = $this->protect_identifiers($related_table).'.'.$this->protect_identifiers($related_primary_key).', ';
 
         if(strstr($related_field_title,'{'))
         {
             $related_field_title = str_replace(" ", "&nbsp;", $related_field_title);
             // some DBMS doesn't have "CONCAT" function
             if(in_array($this->subdriver,$this->NO_CONCAT_DRIVER)){
-                $select .= "('".str_replace(array('{','}'),array("' || COALESCE(",", '') || '"),str_replace("'","\\'", $this->protect_identifiers($related_field_title)))."') as ".$this->protect_identifiers($field_name_hash);
+                $select .= "('".str_replace(array('{','}'),array("' || COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", '') || '"),str_replace("'","\\'", $related_field_title))."') as ".$this->protect_identifiers($field_name_hash);
             }else{
-                $select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'", $this->protect_identifiers($related_field_title)))."') as ".$this->protect_identifiers($field_name_hash);
+                $select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", ''),'"),str_replace("'","\\'", $related_field_title))."') as ".$this->protect_identifiers($field_name_hash);
             }
         }
         else
@@ -217,9 +269,9 @@ class grocery_crud_model_PDO extends grocery_CRUD_Generic_Model{
         {
             $related_field_title = str_replace(" ", "&nbsp;", $related_field_title);
             if(in_array($this->subdriver,$this->NO_CONCAT_DRIVER)){
-                $select .= "('".str_replace(array('{','}'),array("'|| COALESCE(",", '') || '"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
+                $select .= "('".str_replace(array('{','}'),array("'|| COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", '') || '"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
             }else{
-                $select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
+                $select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", ''),'"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
             }
         }
         else
@@ -269,9 +321,9 @@ class grocery_crud_model_PDO extends grocery_CRUD_Generic_Model{
         {
             $related_field_title = str_replace(" ", "&nbsp;", $related_field_title);
             if(in_array($this->subdriver,$this->NO_CONCAT_DRIVER)){
-                $select .= "('".str_replace(array('{','}'),array("'|| COALESCE(",", '') || '"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
+                $select .= "('".str_replace(array('{','}'),array("'|| COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", '') || '"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
             }else{
-                $select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(",", ''),'"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
+                $select .= "CONCAT('".str_replace(array('{','}'),array("',COALESCE(".$this->ESCAPE_CHAR , $this->ESCAPE_CHAR.", ''),'"),str_replace("'","\\'",$related_field_title))."') as $field_name_hash";
             }
         }
         else
