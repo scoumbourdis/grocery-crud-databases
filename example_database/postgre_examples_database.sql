@@ -11,6 +11,320 @@ SET client_min_messages = warning;
 SET search_path = public, pg_catalog;
 
 --
+-- Name: actor_actor_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE actor_actor_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.actor_actor_id_seq OWNER TO root;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: actor; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE actor (
+    actor_id integer DEFAULT nextval('actor_actor_id_seq'::regclass) NOT NULL,
+    fullname character varying(250) NOT NULL,
+    last_update timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.actor OWNER TO root;
+
+--
+-- Name: category_category_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE category_category_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.category_category_id_seq OWNER TO root;
+
+--
+-- Name: category; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE category (
+    category_id integer DEFAULT nextval('category_category_id_seq'::regclass) NOT NULL,
+    name character varying(25) NOT NULL
+);
+
+
+ALTER TABLE public.category OWNER TO root;
+
+--
+-- Name: customers_customernumber_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE customers_customernumber_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.customers_customernumber_seq OWNER TO root;
+
+--
+-- Name: customers; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE customers (
+    "customerNumber" integer DEFAULT nextval('customers_customernumber_seq'::regclass) NOT NULL,
+    "customerName" character varying(50) NOT NULL,
+    "contactLastName" character varying(50) NOT NULL,
+    "contactFirstName" character varying(50) NOT NULL,
+    phone character varying(50) NOT NULL,
+    "addressLine1" character varying(50) NOT NULL,
+    "addressLine2" character varying(50),
+    city character varying(50) NOT NULL,
+    state character varying(50),
+    "postalCode" character varying(15),
+    country character varying(50) NOT NULL,
+    "salesRepEmployeeNumber" integer,
+    "creditLimit" double precision
+);
+
+
+ALTER TABLE public.customers OWNER TO root;
+
+--
+-- Name: employees_employeenumber_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE employees_employeenumber_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.employees_employeenumber_seq OWNER TO root;
+
+--
+-- Name: employees; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE employees (
+    "employeeNumber" integer DEFAULT nextval('employees_employeenumber_seq'::regclass) NOT NULL,
+    "lastName" character varying(50) NOT NULL,
+    "firstName" character varying(50) NOT NULL,
+    extension character varying(10) NOT NULL,
+    email character varying(100) NOT NULL,
+    "officeCode" character varying(10) NOT NULL,
+    file_url character varying(250) NOT NULL,
+    "jobTitle" character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.employees OWNER TO root;
+
+--
+-- Name: film_film_id_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE film_film_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.film_film_id_seq OWNER TO root;
+
+--
+-- Name: film; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE film (
+    film_id integer DEFAULT nextval('film_film_id_seq'::regclass) NOT NULL,
+    title character varying(255) NOT NULL,
+    description text,
+    release_year smallint,
+    rental_duration smallint DEFAULT 3 NOT NULL,
+    rental_rate numeric(4,2) DEFAULT 4.99 NOT NULL,
+    length integer,
+    replacement_cost numeric(5,2) DEFAULT 19.99 NOT NULL,
+    rating character varying(5) DEFAULT 'G'::character varying,
+    special_features text[],
+    last_update timestamp without time zone DEFAULT now() NOT NULL,
+    CONSTRAINT film_rating_check CHECK (((rating)::text = ANY ((ARRAY['G'::character varying, 'PG'::character varying, 'PG-13'::character varying, 'R'::character varying, 'NC-17'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.film OWNER TO root;
+
+--
+-- Name: film_actor; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE film_actor (
+    actor_id integer NOT NULL,
+    film_id integer NOT NULL,
+    priority integer NOT NULL
+);
+
+
+ALTER TABLE public.film_actor OWNER TO root;
+
+--
+-- Name: film_category; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE film_category (
+    film_id integer NOT NULL,
+    category_id smallint NOT NULL
+);
+
+
+ALTER TABLE public.film_category OWNER TO root;
+
+--
+-- Name: offices_officecode_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE offices_officecode_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.offices_officecode_seq OWNER TO root;
+
+--
+-- Name: offices; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE offices (
+    "officeCode" integer DEFAULT nextval('offices_officecode_seq'::regclass) NOT NULL,
+    city character varying(50) NOT NULL,
+    phone character varying(50) NOT NULL,
+    "addressLine1" character varying(50) NOT NULL,
+    "addressLine2" character varying(50),
+    state character varying(50),
+    country character varying(50) NOT NULL,
+    "postalCode" character varying(15) NOT NULL,
+    territory character varying(10) NOT NULL
+);
+
+
+ALTER TABLE public.offices OWNER TO root;
+
+--
+-- Name: orderdetails; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE orderdetails (
+    "orderNumber" integer NOT NULL,
+    "productCode" character varying(15) NOT NULL,
+    "quantityOrdered" integer NOT NULL,
+    "priceEach" double precision NOT NULL,
+    "orderLineNumber" smallint NOT NULL
+);
+
+
+ALTER TABLE public.orderdetails OWNER TO root;
+
+--
+-- Name: orders_ordernumber_seq; Type: SEQUENCE; Schema: public; Owner: root
+--
+
+CREATE SEQUENCE orders_ordernumber_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.orders_ordernumber_seq OWNER TO root;
+
+--
+-- Name: orders; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE orders (
+    "orderNumber" integer DEFAULT nextval('orders_ordernumber_seq'::regclass) NOT NULL,
+    "orderDate" timestamp without time zone NOT NULL,
+    "requiredDate" timestamp without time zone NOT NULL,
+    "shippedDate" timestamp without time zone,
+    status character varying(10) NOT NULL,
+    comments text,
+    "customerNumber" integer NOT NULL,
+    CONSTRAINT orders_status_check CHECK (((status)::text = ANY ((ARRAY['Cancelled'::character varying, 'Disputed'::character varying, 'In Process'::character varying, 'On Hold'::character varying, 'Resolved'::character varying, 'Shipped'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.orders OWNER TO root;
+
+--
+-- Name: payments; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE payments (
+    "customerNumber" integer NOT NULL,
+    "checkNumber" character varying(50) NOT NULL,
+    "paymentDate" timestamp without time zone NOT NULL,
+    amount double precision NOT NULL
+);
+
+
+ALTER TABLE public.payments OWNER TO root;
+
+--
+-- Name: productlines; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE productlines (
+    "productLine" character varying(50) NOT NULL,
+    "textDescription" character varying(4000),
+    "htmlDescription" text,
+    image bytea
+);
+
+
+ALTER TABLE public.productlines OWNER TO root;
+
+--
+-- Name: products; Type: TABLE; Schema: public; Owner: root; Tablespace: 
+--
+
+CREATE TABLE products (
+    "productCode" character varying(15) NOT NULL,
+    "productName" character varying(70) NOT NULL,
+    "productLine" character varying(50) NOT NULL,
+    "productScale" character varying(10) NOT NULL,
+    "productVendor" character varying(50) NOT NULL,
+    "productDescription" text NOT NULL,
+    "quantityInStock" smallint NOT NULL,
+    "buyPrice" double precision NOT NULL,
+    "MSRP" double precision NOT NULL
+);
+
+
+ALTER TABLE public.products OWNER TO root;
+
+--
 -- Data for Name: actor; Type: TABLE DATA; Schema: public; Owner: root
 --
 
@@ -272,8 +586,8 @@ COPY customers ("customerNumber", "customerName", "contactLastName", "contactFir
 129	Mini Wheels Co.	Murphy	Julie	6505555787	5557 North Pendale Street	\N	San Francisco	CA	94217	USA	1165	64600
 131	Land of Toys Inc.	Lee	Kwai	2125557818	897 Long Airport Avenue	\N	NYC	NY	10022	USA	1323	114900
 141	Euro+ Shopping Channel	Freyre	Diego 	(91) 555 94 44	C/ Moralzarzal, 86	\N	Madrid	\N	28034	Spain	1370	227600
-144	Volvo Model Replicas, Co	Berglund	Christina 	0921-12 3555	Berguvsvägen  8	\N	Luleå	\N	S-958 22	Sweden	1504	53100
-145	Danish Wholesale Imports	Petersen	Jytte 	31 12 3555	Vinbæltet 34	\N	Kobenhavn	\N	1734	Denmark	1401	83400
+144	Volvo Model Replicas, Co	Berglund	Christina 	0921-12 3555	BerguvsvÃ¤gen  8	\N	LuleÃ¥	\N	S-958 22	Sweden	1504	53100
+145	Danish Wholesale Imports	Petersen	Jytte 	31 12 3555	VinbÃ¦ltet 34	\N	Kobenhavn	\N	1734	Denmark	1401	83400
 146	Saveley & Henriot, Co.	Saveley	Mary 	78.32.5555	2, rue du Commerce	\N	Lyon	\N	69004	France	1337	123900
 148	Dragon Souveniers, Ltd.	Natividad	Eric	+65 221 7555	Bronz Sok.	Bronz Apt. 3/6 Tesvikiye	Singapore	\N	079903	Singapore	1621	103800
 151	Muscle Machine Inc	Young	Jeff	2125557413	4092 Furth Circle	Suite 400	NYC	NY	10022	USA	1286	138500
@@ -282,8 +596,8 @@ COPY customers ("customerNumber", "customerName", "contactLastName", "contactFir
 166	Handji Gifts& Co	Victorino	Wendy	+65 224 1555	106 Linden Road Sandown	2nd Floor	Singapore	\N	069045	Singapore	1612	97900
 167	Herkku Gifts	Oeztan	Veysel	+47 2267 3215	Brehmen St. 121	PR 334 Sentrum	Bergen	\N	N 5804	Norway  	1504	96800
 168	American Souvenirs Inc	Franco	Keith	2035557845	149 Spinnaker Dr.	Suite 101	New Haven	CT	97823	USA	1286	0
-169	Porto Imports Co.	de Castro	Isabel 	(1) 356-5555	Estrada da saúde n. 58	\N	Lisboa	\N	1756	Portugal	\N	0
-171	Daedalus Designs Imports	Rancé	Martine 	20.16.1555	184, chaussée de Tournai	\N	Lille	\N	59000	France	1370	82900
+169	Porto Imports Co.	de Castro	Isabel 	(1) 356-5555	Estrada da saÃºde n. 58	\N	Lisboa	\N	1756	Portugal	\N	0
+171	Daedalus Designs Imports	RancÃ©	Martine 	20.16.1555	184, chaussÃ©e de Tournai	\N	Lille	\N	59000	France	1370	82900
 172	La Corne D'abondance, Co.	Bertrand	Marie	(1) 42.34.2555	265, boulevard Charonne	\N	Paris	\N	75012	France	1337	84300
 173	Cambridge Collectables Co.	Tseng	Jerry	6175555555	4658 Baden Av.	\N	Cambridge	MA	51247	USA	1188	43400
 175	Gift Depot Inc.	King	Julie	2035552570	25593 South Bay Ln.	\N	Bridgewater	CT	97562	USA	1323	84300
@@ -298,30 +612,30 @@ COPY customers ("customerNumber", "customerName", "contactLastName", "contactFir
 204	Online Mini Collectables	Barajas	Miguel	6175557555	7635 Spinnaker Dr.	\N	Brickhaven	MA	58339	USA	1188	68700
 205	Toys4GrownUps.com	Young	Julie	6265557265	78934 Hillside Dr.	\N	Pasadena	CA	90003	USA	1166	90700
 206	Asian Shopping Network, Co	Walker	Brydey	+612 9411 1555	Suntec Tower Three	8 Temasek	Singapore	\N	038988	Singapore	\N	0
-209	Mini Caravy	Citeaux	Frédérique 	88.60.1555	24, place Kléber	\N	Strasbourg	\N	67000	France	1370	53800
+209	Mini Caravy	Citeaux	FrÃ©dÃ©rique 	88.60.1555	24, place KlÃ©ber	\N	Strasbourg	\N	67000	France	1370	53800
 211	King Kong Collectables, Co.	Gao	Mike	+852 2251 1555	Bank of China Tower	1 Garden Road	Central Hong Kong	\N	\N	Hong Kong	1621	58600
-216	Enaco Distributors	Saavedra	Eduardo 	(93) 203 4555	Rambla de Cataluña, 23	\N	Barcelona	\N	08022	Spain	1702	60300
+216	Enaco Distributors	Saavedra	Eduardo 	(93) 203 4555	Rambla de CataluÃ±a, 23	\N	Barcelona	\N	08022	Spain	1702	60300
 219	Boards & Toys Co.	Young	Mary	3105552373	4097 Douglas Av.	\N	Glendale	CA	92561	USA	1166	11000
-223	Natürlich Autos	Kloss	Horst 	0372-555188	Taucherstraße 10	\N	Cunewalde	\N	01307	Germany	\N	0
-227	Heintze Collectables	Ibsen	Palle	86 21 3555	Smagsloget 45	\N	Århus	\N	8200	Denmark	1401	120800
-233	Québec Home Shopping Network	Fresnière	Jean 	(514) 555-8054	43 rue St. Laurent	\N	Montréal	Québec	H1J 1C3	Canada	1286	48700
-237	ANG Resellers	Camino	Alejandra 	(91) 745 6555	Gran Vía, 1	\N	Madrid	\N	28001	Spain	\N	0
+223	NatÃ¼rlich Autos	Kloss	Horst 	0372-555188	TaucherstraÃŸe 10	\N	Cunewalde	\N	01307	Germany	\N	0
+227	Heintze Collectables	Ibsen	Palle	86 21 3555	Smagsloget 45	\N	Ã…rhus	\N	8200	Denmark	1401	120800
+233	QuÃ©bec Home Shopping Network	FresniÃ¨re	Jean 	(514) 555-8054	43 rue St. Laurent	\N	MontrÃ©al	QuÃ©bec	H1J 1C3	Canada	1286	48700
+237	ANG Resellers	Camino	Alejandra 	(91) 745 6555	Gran VÃ­a, 1	\N	Madrid	\N	28001	Spain	\N	0
 239	Collectable Mini Designs Co.	Thompson	Valarie	7605558146	361 Furth Circle	\N	San Diego	CA	91217	USA	1166	105000
 240	giftsbymail.co.uk	Bennett	Helen 	(198) 555-8888	Garden House	Crowther Way 23	Cowes	Isle of Wight	PO31 7PJ	UK	1501	93900
 242	Alpha Cognac	Roulet	Annette 	61.77.6555	1 rue Alsace-Lorraine	\N	Toulouse	\N	31000	France	1370	61100
 247	Messner Shopping Network	Messner	Renate 	069-0555984	Magazinweg 7	\N	Frankfurt	\N	60528	Germany	\N	0
 249	Amica Models & Co.	Accorti	Paolo 	011-4988555	Via Monte Bianco 34	\N	Torino	\N	10100	Italy	1401	113000
 250	Lyon Souveniers	Da Silva	Daniel	+33 1 46 62 7555	27 rue du Colonel Pierre Avia	\N	Paris	\N	75508	France	1337	68100
-256	Auto Associés & Cie.	Tonini	Daniel 	30.59.8555	67, avenue de l'Europe	\N	Versailles	\N	78000	France	1370	77900
-259	Toms Spezialitäten, Ltd	Pfalzheim	Henriette 	0221-5554327	Mehrheimerstr. 369	\N	Köln	\N	50739	Germany	1504	120400
+256	Auto AssociÃ©s & Cie.	Tonini	Daniel 	30.59.8555	67, avenue de l'Europe	\N	Versailles	\N	78000	France	1370	77900
+259	Toms SpezialitÃ¤ten, Ltd	Pfalzheim	Henriette 	0221-5554327	Mehrheimerstr. 369	\N	KÃ¶ln	\N	50739	Germany	1504	120400
 260	Royal Canadian Collectables, Ltd.	Lincoln	Elizabeth 	(604) 555-4555	23 Tsawassen Blvd.	\N	Tsawassen	BC	T2F 8M4	Canada	1323	89600
-273	Franken Gifts, Co	Franken	Peter 	089-0877555	Berliner Platz 43	\N	München	\N	80805	Germany	\N	0
+273	Franken Gifts, Co	Franken	Peter 	089-0877555	Berliner Platz 43	\N	MÃ¼nchen	\N	80805	Germany	\N	0
 276	Anna's Decorations, Ltd	O'Hara	Anna	02 9936 8555	201 Miller Street	Level 15	North Sydney	NSW	2060	Australia	1611	107800
 278	Rovelli Gifts	Rovelli	Giovanni 	035-640555	Via Ludovico il Moro 22	\N	Bergamo	\N	24100	Italy	1401	119600
 282	Souveniers And Things Co.	Huxley	Adrian	+61 2 9495 8555	Monitor Money Building	815 Pacific Hwy	Chatswood	NSW	2067	Australia	1611	93300
 286	Marta's Replicas Co.	Hernandez	Marta	6175558555	39323 Spinnaker Dr.	\N	Cambridge	MA	51247	USA	1216	123700
 293	BG&E Collectables	Harrison	Ed	+41 26 425 50 01	Rte des Arsenaux 41 	\N	Fribourg	\N	1700	Switzerland	\N	0
-298	Vida Sport, Ltd	Holz	Mihael	0897-034555	Grenzacherweg 237	\N	Genève	\N	1203	Switzerland	1702	141300
+298	Vida Sport, Ltd	Holz	Mihael	0897-034555	Grenzacherweg 237	\N	GenÃ¨ve	\N	1203	Switzerland	1702	141300
 299	Norway Gifts By Mail, Co.	Klaeboe	Jan	+47 2212 1555	Drammensveien 126A	PB 211 Sentrum	Oslo	\N	N 0106	Norway  	1504	95100
 303	Schuyler Imports	Schuyler	Bradley	+31 20 491 9555	Kingsfordweg 151	\N	Amsterdam	\N	1043 GR	Netherlands	\N	0
 307	Der Hund Imports	Andersen	Mel	030-0074555	Obere Str. 57	\N	Berlin	\N	12209	Germany	\N	0
@@ -335,7 +649,7 @@ COPY customers ("customerNumber", "customerName", "contactLastName", "contactFir
 328	Tekni Collectables Inc.	Brown	William	2015559350	7476 Moss Rd.	\N	Newark	NJ	94019	USA	1323	43000
 333	Australian Gift Network, Co	Calaghan	Ben	61-7-3844-6555	31 Duncan St. West End	\N	South Brisbane	Queensland	4101	Australia	1611	51600
 334	Suominen Souveniers	Suominen	Kalle	+358 9 8045 555	Software Engineering Center	SEC Oy	Espoo	\N	FIN-02271	Finland	1501	98800
-335	Cramer Spezialitäten, Ltd	Cramer	Philip 	0555-09555	Maubelstr. 90	\N	Brandenburg	\N	14776	Germany	\N	0
+335	Cramer SpezialitÃ¤ten, Ltd	Cramer	Philip 	0555-09555	Maubelstr. 90	\N	Brandenburg	\N	14776	Germany	\N	0
 339	Classic Gift Ideas, Inc	Cervantes	Francisca	2155554695	782 First Street	\N	Philadelphia	PA	71270	USA	1188	81100
 344	CAF Imports	Fernandez	Jesus	+34 913 728 555	Merchants House	27-30 Merchant's Quay	Madrid	\N	28023	Spain	1702	59600
 347	Men 'R' US Retailers, Ltd.	Chandler	Brian	2155554369	6047 Douglas Av.	\N	Los Angeles	CA	91003	USA	1166	57700
@@ -344,7 +658,7 @@ COPY customers ("customerNumber", "customerName", "contactLastName", "contactFir
 353	Reims Collectables	Henriot	Paul 	26.47.1555	59 rue de l'Abbaye	\N	Reims	\N	51100	France	1337	81100
 356	SAR Distributors, Co	Kuger	Armand	+27 21 550 3555	1250 Pretorius Street	\N	Hatfield	Pretoria	0028	South Africa	\N	0
 357	GiftsForHim.com	MacKinlay	Wales	64-9-3763555	199 Great North Road	\N	Auckland	\N	\N	New Zealand	1612	77700
-361	Kommission Auto	Josephs	Karin	0251-555259	Luisenstr. 48	\N	Münster	\N	44087	Germany	\N	0
+361	Kommission Auto	Josephs	Karin	0251-555259	Luisenstr. 48	\N	MÃ¼nster	\N	44087	Germany	\N	0
 362	Gifts4AllAges.com	Yoshido	Juri	6175559555	8616 Spinnaker Dr.	\N	Boston	MA	51003	USA	1216	41900
 363	Online Diecast Creations Co.	Young	Dorothy	6035558647	2304 Long Airport Avenue	\N	Nashua	NH	62005	USA	1216	114200
 369	Lisboa Souveniers, Inc	Rodriguez	Lino 	(1) 354-2555	Jardim das rosas n. 32	\N	Lisboa	\N	1675	Portugal	\N	0
@@ -356,28 +670,28 @@ COPY customers ("customerNumber", "customerName", "contactLastName", "contactFir
 386	L'ordine Souveniers	Moroni	Maurizio 	0522-556555	Strada Provinciale 124	\N	Reggio Emilia	\N	42100	Italy	1401	121400
 398	Tokyo Collectables, Ltd	Shimamura	Akiko	+81 3 3584 0555	2-2-8 Roppongi	\N	Minato-ku	Tokyo	106-0032	Japan	1621	94400
 406	Auto Canal+ Petit	Perrier	Dominique	(1) 47.55.6555	25, rue Lauriston	\N	Paris	\N	75016	France	1337	95000
-409	Stuttgart Collectable Exchange	Müller	Rita 	0711-555361	Adenauerallee 900	\N	Stuttgart	\N	70563	Germany	\N	0
+409	Stuttgart Collectable Exchange	MÃ¼ller	Rita 	0711-555361	Adenauerallee 900	\N	Stuttgart	\N	70563	Germany	\N	0
 412	Extreme Desk Decorations, Ltd	McRoy	Sarah	04 499 9555	101 Lambton Quay	Level 11	Wellington	\N	\N	New Zealand	1612	86800
 415	Bavarian Collectables Imports, Co.	Donnermeyer	Michael	 +49 89 61 08 9555	Hansastr. 15	\N	Munich	\N	80686	Germany	1504	77000
 424	Classic Legends Inc.	Hernandez	Maria	2125558493	5905 Pompton St.	Suite 750	NYC	NY	10022	USA	1286	67500
 443	Feuer Online Stores, Inc	Feuer	Alexander 	0342-555176	Heerstr. 22	\N	Leipzig	\N	04179	Germany	\N	0
 447	Gift Ideas Corp.	Lewis	Dan	2035554407	2440 Pompton St.	\N	Glendale	CT	97561	USA	1323	49700
-448	Scandinavian Gift Ideas	Larsson	Martha	0695-34 6555	Åkergatan 24	\N	Bräcke	\N	S-844 67	Sweden	1504	116400
+448	Scandinavian Gift Ideas	Larsson	Martha	0695-34 6555	Ã…kergatan 24	\N	BrÃ¤cke	\N	S-844 67	Sweden	1504	116400
 450	The Sharp Gifts Warehouse	Frick	Sue	4085553659	3086 Ingle Ln.	\N	San Jose	CA	94217	USA	1165	77600
 452	Mini Auto Werke	Mendel	Roland 	7675-3555	Kirchgasse 6	\N	Graz	\N	8010	Austria	1401	45300
 455	Super Scale Inc.	Murphy	Leslie	2035559545	567 North Pendale Street	\N	New Haven	CT	97823	USA	1286	95400
 456	Microscale Inc.	Choi	Yu	2125551957	5290 North Pendale Street	Suite 200	NYC	NY	10022	USA	1286	39800
-458	Corrida Auto Replicas, Ltd	Sommer	Martín 	(91) 555 22 82	C/ Araquil, 67	\N	Madrid	\N	28023	Spain	1702	104600
+458	Corrida Auto Replicas, Ltd	Sommer	MartÃ­n 	(91) 555 22 82	C/ Araquil, 67	\N	Madrid	\N	28023	Spain	1702	104600
 459	Warburg Exchange	Ottlieb	Sven 	0241-039123	Walserweg 21	\N	Aachen	\N	52066	Germany	\N	0
 462	FunGiftIdeas.com	Benitez	Violeta	5085552555	1785 First Street	\N	New Bedford	MA	50553	USA	1216	85800
 465	Anton Designs, Ltd.	Anton	Carmen	+34 913 728555	c/ Gobelas, 19-1 Urb. La Florida	\N	Madrid	\N	28023	Spain	\N	0
 471	Australian Collectables, Ltd	Clenahan	Sean	61-9-3844-6555	7 Allen Street	\N	Glen Waverly	Victoria	3150	Australia	1611	60300
 473	Frau da Collezione	Ricotti	Franco	+39 022515555	20093 Cologno Monzese	Alessandro Volta 16	Milan	\N	\N	Italy	1401	34800
 475	West Coast Collectables Co.	Thompson	Steve	3105553722	3675 Furth Circle	\N	Burbank	CA	94019	USA	1166	55400
-477	Mit Vergnügen & Co.	Moos	Hanna 	0621-08555	Forsterstr. 57	\N	Mannheim	\N	68306	Germany	\N	0
+477	Mit VergnÃ¼gen & Co.	Moos	Hanna 	0621-08555	Forsterstr. 57	\N	Mannheim	\N	68306	Germany	\N	0
 480	Kremlin Collectables, Co.	Semenov	Alexander 	+7 812 293 0521	2 Pobedy Square	\N	Saint Petersburg	\N	196143	Russia	\N	0
 481	Raanan Stores, Inc	Altagar,G M	Raanan	+ 972 9 959 8555	3 Hagalim Blv.	\N	Herzlia	\N	47625	Israel	\N	0
-484	Iberia Gift Imports, Corp.	Roel	José Pedro 	(95) 555 82 82	C/ Romero, 33	\N	Sevilla	\N	41101	Spain	1702	65700
+484	Iberia Gift Imports, Corp.	Roel	JosÃ© Pedro 	(95) 555 82 82	C/ Romero, 33	\N	Sevilla	\N	41101	Spain	1702	65700
 486	Motor Mint Distributors Inc.	Salazar	Rosa	2155559857	11328 Douglas Av.	\N	Philadelphia	PA	71270	USA	1323	72600
 487	Signal Collectibles Ltd.	Taylor	Sue	4155554312	2793 Furth Circle	\N	Brisbane	CA	94217	USA	1165	60300
 489	Double Decker Gift Stores, Ltd	Smith	Thomas 	(171) 555-7555	120 Hanover Sq.	\N	London	\N	WA1 1DP	UK	1501	43300
@@ -12693,7 +13007,7 @@ S24_4048	1992 Porsche Cayenne Turbo Silver	Classic Cars	1:24	Exoto Designs	This 
 S24_4258	1936 Chrysler Airflow	Vintage Cars	1:24	Second Gear Diecast	Features opening trunk,  working steering system. Color dark green.	4710	57.4600000000000009	97.3900000000000006
 S24_4278	1900s Vintage Tri-Plane	Planes	1:24	Unimax Art Galleries	Hand crafted diecast-like metal Triplane is Re-created in about 1:24 scale of antique pioneer airplane. This antique style metal triplane is all hand-assembled with many different parts.	2756	36.2299999999999969	72.4500000000000028
 S24_4620	1961 Chevrolet Impala	Classic Cars	1:18	Classic Metal Creations	This 1:18 scale precision die-cast reproduction of the 1961 Chevrolet Impala has all the features-doors, hood and trunk that open; detailed 409 cubic-inch engine; chrome dashboard and stick shift, two-tone interior; working steering system; all topped of with a factory baked-enamel finish.	7869	32.3299999999999983	80.8400000000000034
-S32_1268	1980’s GM Manhattan Express	Trucks and Buses	1:32	Motor City Art Classics	This 1980’s era new look Manhattan express is still active, running from the Bronx to mid-town Manhattan. Has 35 opeining windows and working lights. Needs a battery.	5099	53.9299999999999997	96.3100000000000023
+S32_1268	1980â€™s GM Manhattan Express	Trucks and Buses	1:32	Motor City Art Classics	This 1980â€™s era new look Manhattan express is still active, running from the Bronx to mid-town Manhattan. Has 35 opeining windows and working lights. Needs a battery.	5099	53.9299999999999997	96.3100000000000023
 S32_1374	1997 BMW F650 ST	Motorcycles	1:32	Exoto Designs	Features official die-struck logos and baked enamel finish. Comes with stand.	178	66.9200000000000017	99.8900000000000006
 S32_2206	1982 Ducati 996 R	Motorcycles	1:32	Gearbox Collectibles	Features rotating wheels , working kick stand. Comes with stand.	9241	24.1400000000000006	40.2299999999999969
 S32_2509	1954 Greyhound Scenicruiser	Trucks and Buses	1:32	Classic Metal Creations	Model features bi-level seating, 50 windows, skylights & glare resistant glass, working steering system, original logos	2874	25.9800000000000004	54.1099999999999994
@@ -12719,6 +13033,80 @@ S700_3962	The Queen Mary	Ships	1:700	Welly Diecast Productions	Exact replica. Wo
 S700_4002	American Airlines: MD-11S	Planes	1:700	Second Gear Diecast	Polished finish. Exact replia with official logos and insignias and retractable wheels	8820	36.2700000000000031	74.0300000000000011
 S72_3212	Pont Yacht	Ships	1:72	Unimax Art Galleries	Measures 38 inches Long x 33 3/4 inches High. Includes a stand.\r\nMany extras including rigging, long boats, pilot house, anchors, etc. Comes with 2 masts, all square-rigged	414	33.2999999999999972	54.6000000000000014
 \.
+
+
+--
+-- Name: actor_actor_id_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY actor
+    ADD CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id);
+
+
+--
+-- Name: category_category_id_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY category
+    ADD CONSTRAINT category_category_id_pkey PRIMARY KEY (category_id);
+
+
+--
+-- Name: customers_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY customers
+    ADD CONSTRAINT customers_pkey PRIMARY KEY ("customerNumber");
+
+
+--
+-- Name: employees_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY employees
+    ADD CONSTRAINT employees_pkey PRIMARY KEY ("employeeNumber");
+
+
+--
+-- Name: film_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY film
+    ADD CONSTRAINT film_pkey PRIMARY KEY (film_id);
+
+
+--
+-- Name: offices_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY offices
+    ADD CONSTRAINT offices_pkey PRIMARY KEY ("officeCode");
+
+
+--
+-- Name: orders_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY orders
+    ADD CONSTRAINT orders_pkey PRIMARY KEY ("orderNumber");
+
+
+--
+-- Name: products_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
+--
+
+ALTER TABLE ONLY products
+    ADD CONSTRAINT products_pkey PRIMARY KEY ("productCode");
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
